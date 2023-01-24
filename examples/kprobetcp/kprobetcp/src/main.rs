@@ -1,4 +1,4 @@
-use aya::{include_bytes_aligned, programs::KProbe, Bpf};
+use aya::{include_bytes_aligned, programs::UProbe, Bpf};
 use aya_log::BpfLogger;
 use clap::Parser;
 use log::{info, warn};
@@ -29,10 +29,10 @@ async fn main() -> Result<(), anyhow::Error> {
         // This can happen if you remove all log statements from your eBPF program.
         warn!("failed to initialize eBPF logger: {}", e);
     }
-    let program: &mut KProbe =
-        bpf.program_mut("kprobetcp").unwrap().try_into()?;
+    let program: &mut UProbe =
+        bpf.program_mut("osslreadprobe").unwrap().try_into()?;
     program.load()?;
-    program.attach("tcp_connect", 0)?;
+    program.attach(Some("SSL_read"), 0, "/usr/lib64/libssl.so.3", None)?;
 
     info!("Waiting for Ctrl-C...");
     signal::ctrl_c().await?;
